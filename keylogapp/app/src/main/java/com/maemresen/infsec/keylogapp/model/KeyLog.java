@@ -5,17 +5,12 @@ import com.maemresen.infsec.keylogapp.util.DateTimeHelper;
 
 import java.util.Date;
 
-/**
- * @author Emre Sen, 14.05.2019
- * @contact maemresen07@gmail.com
- */
 public class KeyLog {
 
     private String uuid;
-    private Date keyLogDate;
+    private String keyLogDate;
     private String accessibilityEvent;
     private String msg;
-
 
     public String getUuid() {
         return uuid;
@@ -25,11 +20,11 @@ public class KeyLog {
         this.uuid = uuid;
     }
 
-    public Date getKeyLogDate() {
+    public String getKeyLogDate() {
         return keyLogDate;
     }
 
-    public void setKeyLogDate(Date keyLogDate) {
+    public void setKeyLogDate(String keyLogDate) {
         this.keyLogDate = keyLogDate;
     }
 

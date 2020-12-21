@@ -8,11 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Utility class for dateTime operations...
- *
- * @author mehmetkarakoc
- */
 public class DateTimeHelper {
 
     /**

