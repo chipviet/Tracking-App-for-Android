@@ -27,14 +27,14 @@ public class KeyLogRestController {
 
     @PostMapping("/save")
     public String save(@RequestBody KeyLogModel keyLogModel) {
-        LOGGER.info("Received Key Log"
-                        + "\n\tUUID: {}"
-                        + "\n\tMessage: {}"
-                        + "\n\tDate: {}"
-
-                , keyLogModel.getUuid()
-                , keyLogModel.getMsg()
-                , DateTimeHelper.getTheDateInString(keyLogModel.getKeyLogDate()));
+//        LOGGER.info("Received Key Log"
+//                        + "\n\tUUID: {}"
+//                        + "\n\tMessage: {}"
+//                        + "\n\tDate: {}"
+//
+//                , keyLogModel.getUuid()
+//                , keyLogModel.getMsg()
+//                , DateTimeHelper.get(keyLogModel.getKeyLogDate()));
         KeyLog keyLog = new KeyLog(keyLogModel);
         keyLogService.save(keyLog);
         return "Success";

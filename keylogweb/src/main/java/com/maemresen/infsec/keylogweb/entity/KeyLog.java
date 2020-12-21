@@ -1,27 +1,32 @@
 package com.maemresen.infsec.keylogweb.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.maemresen.infsec.keylogweb.model.KeyLogModel;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 
-/**
- * @author Emre Sen - 14.05.2019
- * @contact maemresen07@gmail.com
- */
 @Entity
+@Table(name = "keylogger")
+
 public class KeyLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = javax.persistence.GenerationType.IDENTITY )
     private int id;
 
+    @Column(name = "uuid")
     private String uuid;
-    private Date keyLogDate;
+
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @Column(name = "key_log_date")
+    private String keyLogDate;
+
+    @Column(name = "accessibility_event")
     private String accessibilityEvent;
+
+    @Column(name = "msg")
     private String msg;
 
     public KeyLog(){
@@ -51,11 +56,11 @@ public class KeyLog {
         this.uuid = uuid;
     }
 
-    public Date getKeyLogDate() {
+    public String getKeyLogDate() {
         return keyLogDate;
     }
 
-    public void setKeyLogDate(Date keyLogDate) {
+    public void setKeyLogDate(String keyLogDate) {
         this.keyLogDate = keyLogDate;
     }
 
